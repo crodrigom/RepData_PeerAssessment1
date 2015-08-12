@@ -99,12 +99,12 @@ and reporting the mean and median total number of steps taken per day.
 
 new.steps_by_day <- ddply(new.activities, .(date), summarize, steps_by_day = sum(steps))
 
-to.plot <- ggplot(new.steps_by_day,aes(x = steps_by_day)) + 
+to.plot.new <- ggplot(new.steps_by_day,aes(x = steps_by_day)) + 
         geom_histogram() + 
         ggtitle("Histogram of total steps per day") +
         xlab("Number of steps made per day") +
         ylab("Frequency")
-print(to.plot)
+print(to.plot.new)
             
 ```
 
@@ -153,12 +153,13 @@ across all weekday days or weekend days (y-axis)
 steps_by_weekday <- ddply(activities, .(interval, days.of.week), 
                           summarize, avg_steps_by_day = mean(steps, na.rm = TRUE))
 
-to.plot <- ggplot(steps_by_weekday,aes(interval, avg_steps_by_day)) + 
+to.plot.avg <- ggplot(steps_by_weekday,aes(interval, avg_steps_by_day)) + 
         geom_line() + 
         facet_grid(days.of.week ~.) +
         ggtitle("Average number of steps taken across weekday and weekend") +
         xlab("Number of steps made per day") +
         ylab("Frequency")
-print(to.plot)
+print(to.plot.avg)
 ```
+
 
