@@ -24,9 +24,13 @@ activities$date <- as.Date( activities$date, format = '%Y-%m-%d' )
 
 We decide to sumarize the data by the number of steps by day
 ```{r echo=TRUE}
-steps_by_day <- tapply(activities$steps, activities$date, function(x) sum(x,na.rm = TRUE))
+library(plyr)
+steps_by_day <- tapply(activities$steps, activities$date, FUN =  sum, na.rm = TRUE)
+steps_by_day <- tapply(activities$steps, activities$date, function(x) sum(x))
 steps_by_day <- as.data.frame(steps_by_day)
 steps_by_day$steps_by_day <- as.numeric(steps_by_day$steps_by_day)
+
+steps_by_day = ddply(activities, .(date), summarize, steps_by_day = sum(steps))
 
 ```
 
@@ -39,11 +43,12 @@ Making a histogram of the total number of steps taken each day:
 library(ggplot2)
 
 to.plot <- ggplot(steps_by_day,aes(x = steps_by_day)) + 
-        geom_histogram() + 
+        geom_histogram(binwidth=x) + 
         ggtitle("Histogram of total steps per day") +
         xlab("Number of steps made per day") +
         ylab("Frequency")
 print(to.plot)
+
 ```
 Calculate and report the mean and median total number of steps taken per day
 ```{r echo=TRUE}
@@ -57,10 +62,12 @@ Making a time series plot (i.e. type = "l") of the 5-minute interval (x-axis)
 and the average number of steps taken, averaged across all days (y-axis)
 
 ```{r echo=TRUE}
-steps_mean_by_day <- tapply(activities$steps, activities$interval, function(x) mean(x,na.rm = TRUE))
+steps_mean_by_day <- aggregate(x=list(avg.steps=activities$steps), by=list(interval=activities$interval), 
+                               FUN=mean, na.rm=TRUE)
 steps_mean_by_day <- as.data.frame(steps_mean_by_day)
 
-plot(steps_mean_by_day$steps_mean_by_day, type="l", main="Average across all days based on intervals", xlab="Intervals", ylab="Steps Averaged")
+plot(steps_mean_by_day$avg.steps, type="l", main="Average across all days based on intervals", 
+     xlab="Intervals", ylab="Steps Averaged")
 ```
 
 Which 5-minute interval, on average across all the days in the dataset,
@@ -74,27 +81,48 @@ paste("The interval with maximum number of steps is:", names(my_max))
 ## Imputing missing values
 
 Calculating and reporting the total number of missing values in the dataset
-(i.e. the total number of rows with NAs)
+First we report the numbers of NAs in all data frame
+Second we show the number of completa cases, the rows that contains NAs and the rows that do not.
 ```{r echo=TRUE}
+table(is.na(activities))
+table(complete.cases(activities))
 ```
 
 Filling in all of the missing values in the dataset. The strategy 
 is to exchange the missing values with the mean values for intervals.
+We created a new dataset with the missing data filled in
 ```{r echo=TRUE}
-```
+new.activities = activities
+filling_values = steps_mean_by_day$avg.steps[match(new.activities$interval, steps_mean_by_day$interval)]
+new.activities$steps[is.na(new.activities$steps)] = filling_values[is.na(activities$steps)]
 
-Creating a new dataset that is equal to the original dataset but with the
-missing data filled in
-```{r echo=TRUE}
 ```
 
 Making a histogram of the total number of steps taken each day and Calculating
 and reporting the mean and median total number of steps taken per day. 
+```{r echo=TRUE}
+
+new.steps_by_day <- tapply(new.activities$steps, new.activities$date, function(x) sum(x,na.rm = TRUE))
+new.steps_by_day <- as.data.frame(new.steps_by_day)
+names(new.steps_by_day) = "steps_by_day"
+
+to.plot <- ggplot(new.steps_by_day,aes(x = steps_by_day)) + 
+        geom_histogram() + 
+        ggtitle("Histogram of total steps per day") +
+        xlab("Number of steps made per day") +
+        ylab("Frequency")
+print(to.plot)
+            
+```
+
 Now we are able to awnser the following questions:
 - Do these values differ from the estimates from the first part of the assignment?
 - What is the impact of imputing missing data on the estimates of the total
 daily number of steps?
 ```{r echo=TRUE}
+summary(new.steps_by_day$new.steps_by_day)
+mean(new.steps_by_day$new.steps_by_day, na.rm=TRUE)
+median(new.steps_by_day$new.steps_by_day, na.rm=TRUE)
 ```
 
 
